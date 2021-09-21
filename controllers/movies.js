@@ -44,8 +44,9 @@ module.exports.createMovie = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании фильма'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -60,14 +61,14 @@ module.exports.deleteMovie = (req, res, next) => {
         throw new ForbiddenError('Действие запрещено');
       }
 
-      movie.remove();
-
-      return res.send({ data: movie });
+      return movie.remove()
+        .then(() => res.send({ data: movie }));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };

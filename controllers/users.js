@@ -19,8 +19,9 @@ module.exports.getProfile = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -37,11 +38,13 @@ module.exports.updateProfile = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при обновлении профиля'));
-      }
-      if (err.name === 'CastError') {
+      } else if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
+      } else if (err.name === 'MongoServerError' && err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -56,15 +59,25 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.send({ data: user }))
+    .then((user) => {
+      res.send({
+        data: {
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+          },
+        },
+      });
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
-      }
-      if (err.name === 'MongoError' && err.code === 11000) {
+      } else if (err.name === 'MongoServerError' && err.code === 11000) {
         next(new ConflictError('Пользователь с таким email уже существует'));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
