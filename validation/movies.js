@@ -18,6 +18,6 @@ module.exports.createMovieSchema = celebrate({
 
 module.exports.deleteMovieSchema = celebrate({
   params: {
-    movieId: Joi.number().required(),
+    movieId: Joi.string().hex().length(24).required(),
   },
 });
